@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Protocol | Cloud Sync</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f4f2f0">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+
+    <style>
+        /* --- SAM BENNETT AESTHETIC PROTOCOL --- */
+        :root {
+            --bg-color: #f4f2f0;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #4a4a4a;
+            --text-muted: #8c8c8c;
+            --gold: #c7a365; 
+            --blue: #6c8ea4; /* For Thinking Model */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+        }
+
+        /* Main Container */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .modules-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* The Glass Card */
+        .card {
+            width: 260px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        h1 {
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 0;
+            font-weight: 600;
+        }
+
+        /* The Counters */
+        .count-display {
+            font-size: 4rem;
+            font-weight: 200;
+            line-height: 1;
+            color: var(--text-main);
+        }
+
+        .limit-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* The Buttons */
+        .log-btn {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            margin-top: 10px;
+        }
+
+        .log-btn:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-color: #ccc;
+        }
+        
+        /* Specific Styles */
+        .btn-pro { color: var(--text-main); }
+        .btn-think { color: var(--blue); }
+        
+        /* History Section */
+        .history-card {
+            width: 540px; /* Spans both cards */
+            padding: 20px 30px;
+            min-height: 100px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 120px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 8px 0;
+            color: var(--text-muted);
+            border-bottom: 1px dashed rgba(0,0,0,0.05);
+        }
+
+        /* Loading State */
+        .loading { opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard" id="main-ui">
+        
+        <div class="modules-container">
+            
+            <div class="card">
+                <h1>Google AI Pro</h1>
+                <div>
+                    <span id="pro-count" class="count-display">...</span>
+                    <span class="limit-label">/ 50 MESSAGES</span>
+                </div>
+                <button class="log-btn btn-pro" onclick="increment('pro')">+ LOG STANDARD</button>
+            </div>
+
+            <div class="card">
+                <h1>Thinking Model</h1>
+                <div>
+                    <span id="think-count" class="count-display" style="color: var(--blue)">...</span>
+                    <span class="limit-label">/ 100 MESSAGES</span>
+                </div>
+                <button class="log-btn btn-think" onclick="increment('thinking')">+ LOG THOUGHT</button>
+            </div>
+
+        </div>
+
+        <div class="card history-card">
+            <h1>Database Archives</h1>
+            <ul id="history-list" class="history-list">
+                <li class="history-item">Connecting to Firebase...</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWbNjdj-pLIRV3i_2MEEWQio6IQ4Ri4tU",
+            authDomain: "hubs-database.firebaseapp.com",
+            projectId: "hubs-database",
+            storageBucket: "hubs-database.firebasestorage.app",
+            messagingSenderId: "677512604138",
+            appId: "1:677512604138:web:00c5a8b62c5ff96812aa93",
+            measurementId: "G-2R4SWBV1XR"
+        };
+
+        // --- INIT ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- DOM ELEMENTS ---
+        const ui = document.getElementById('main-ui');
+        const proDisplay = document.getElementById('pro-count');
+        const thinkDisplay = document.getElementById('think-count');
+        const historyList = document.getElementById('history-list');
+
+        // --- DATE LOGIC ---
+        // We use the date as the Document ID (e.g., "2026-01-20")
+        const todayID = new Date().toISOString().split('T')[0]; 
+        const dailyRef = doc(db, "usage_logs", todayID);
+
+        // --- GLOBAL STATE ---
+        let currentPro = 0;
+        let currentThink = 0;
+
+        // --- 1. LOAD DATA ---
+        async function initTracker() {
+            ui.classList.add('loading');
+            
+            try {
+                // Check if today's document exists
+                const docSnap = await getDoc(dailyRef);
+
+                if (docSnap.exists()) {
+                    // Load existing data
+                    const data = docSnap.data();
+                    currentPro = data.pro || 0;
+                    currentThink = data.thinking || 0;
+                } else {
+                    // New Day: Create document
+                    await setDoc(dailyRef, {
+                        date: todayID,
+                        pro: 0,
+                        thinking: 0,
+                        timestamp: new Date()
+                    });
+                    currentPro = 0;
+                    currentThink = 0;
+                }
+
+                updateUI();
+                loadHistory(); // Fetch previous days
+                
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                alert("Connection glitch. Check console.");
+            } finally {
+                ui.classList.remove('loading');
+            }
+        }
+
+        // --- 2. UPDATE ACTIONS ---
+        window.increment = async function(type) {
+            // Optimistic UI update (update screen before DB for speed)
+            if (type === 'pro') {
+                if(currentPro >= 50) return alert("Pro Limit Reached.");
+                currentPro++;
+            } else {
+                if(currentThink >= 100) return alert("Thinking Limit Reached.");
+                currentThink++;
+            }
+            updateUI();
+
+            // Send to Firebase
+            try {
+                await updateDoc(dailyRef, {
+                    pro: currentPro,
+                    thinking: currentThink
+                });
+            } catch (error) {
+                console.error("Save failed:", error);
+                // Revert on failure
+                if (type === 'pro') currentPro--; else currentThink--;
+                updateUI();
+                alert("Sync failed. Check internet.");
+            }
+        }
+
+        // --- 3. UI RENDER ---
+        function updateUI() {
+            proDisplay.innerText = currentPro;
+            thinkDisplay.innerText = currentThink;
+
+            // Color Warnings
+            proDisplay.style.color = currentPro >= 45 ? "#c7a365" : "#4a4a4a";
+            thinkDisplay.style.color = currentThink >= 90 ? "#c7a365" : "#6c8ea4";
+        }
+
+        // --- 4. HISTORY LOADER ---
+        async function loadHistory() {
+            const historyRef = collection(db, "usage_logs");
+            // Get last 5 days, ordered by date descending
+            const q = query(historyRef, orderBy("date", "desc"), limit(6));
+            
+            const querySnapshot = await getDocs(q);
+            historyList.innerHTML = ""; // Clear list
+
+            querySnapshot.forEach((doc) => {
+                // Skip today in history view if you want, or keep it. 
+                // Let's skip today so history shows *past* stats only.
+                if (doc.id === todayID) return;
+
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `
+                    <span>${data.date}</span>
+                    <span>
+                        <strong style="color:var(--text-main)">Pro:</strong> ${data.pro} &nbsp;|&nbsp; 
+                        <strong style="color:var(--blue)">Think:</strong> ${data.thinking}
+                    </span>
+                `;
+                historyList.appendChild(li);
+            });
+
+            if (historyList.children.length === 0) {
+                historyList.innerHTML = '<li class="history-item" style="justify-content:center">No past archives found.</li>';
+            }
+        }
+
+        // Start the engine
+        initTracker();
+
+    </script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failure', err));
+        });
+    }
+</script>
+
+</body>
+</html>
