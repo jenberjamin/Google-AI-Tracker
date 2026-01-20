@@ -1,5 +1,5 @@
 {
-  "name": "Google AI Plus Tracker",
+  "name": "Google AI Tracker",
   "short_name": "Gemini",
   "start_url": "./index.html",
   "display": "standalone",
@@ -7,12 +7,12 @@
   "theme_color": "#f4f2f0",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "Google-Gemini.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "Google-Gemini.png",
       "sizes": "512x512",
       "type": "image/png"
     }
