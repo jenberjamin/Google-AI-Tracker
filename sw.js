@@ -3,6 +3,7 @@ const ASSETS = [
   './',
   './index.html',
   './manifest.json'
+  '.Google-Gemini.png'
 ];
 
 // 1. Install Service Worker & Cache Static Assets
@@ -40,4 +41,5 @@ self.addEventListener('fetch', (event) => {
       return cachedResponse || fetch(event.request);
     })
   );
+
 });
