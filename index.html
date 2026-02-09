@@ -206,7 +206,19 @@
 
         // --- DATE LOGIC ---
         // We use the date as the Document ID (e.g., "2026-01-20")
-        const todayID = new Date().toISOString().split('T')[0]; 
+        const now = new Date();
+        const resetHour = 18; // 6 PM
+        const resetMinute = 49;
+
+        // Create a copy of the date to manipulate
+        let logicDate = new Date(now);
+
+        // If current time is BEFORE 6:49 PM, we are technically still in "yesterday's" usage cycle
+        if (now.getHours() < resetHour || (now.getHours() === resetHour && now.getMinutes() < resetMinute)) {
+            logicDate.setDate(now.getDate() - 1);
+        }
+
+        const todayID = logicDate.toISOString().split('T')[0]; 
         const dailyRef = doc(db, "usage_logs", todayID);
 
         // --- GLOBAL STATE ---
@@ -336,3 +348,4 @@
 </body>
 
 </html>
+
